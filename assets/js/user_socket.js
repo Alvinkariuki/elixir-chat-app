@@ -2,11 +2,47 @@
 // you uncomment its entry in "assets/js/app.js".
 
 // Bring in Phoenix channels client library:
-import {Socket} from "phoenix"
+import { Socket } from "phoenix";
 
 // And connect to the path in "lib/chat_app_web/endpoint.ex". We pass the
 // token for authentication. Read below how it should be used.
-let socket = new Socket("/socket", {params: {token: window.userToken}})
+let socket = new Socket("/socket", { params: { token: window.userToken } });
+let channel = socket.channel("room:lobby", {});
+let chatInput = document.querySelector("#chat-input");
+let messagesContainer = document.querySelector("#messages");
+let messageMarkup = (payload) => {
+  return `
+  <div class="flex items-end">
+    <div class="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-2 items-start">
+      <div>
+        <span class="px-4 py-2 rounded-lg inline-block rounded-bl-none bg-gray-200 text-gray-600">
+          ${payload.body}
+        </span>
+      </div>
+    </div>
+
+    <img
+      src="https://avatars.githubusercontent.com/u/3?v=4"
+      alt="My profile"
+      class="w-6 h-6 rounded-full order-1"
+    />
+  </div>
+  `;
+};
+
+chatInput.addEventListener("keypress", (e) => {
+  if (e.key == "Enter") {
+    channel.push("new_msg", { body: chatInput.value });
+    chatInput.value = "";
+  }
+});
+
+channel.on("new_msg", (payload) => {
+  let messageItem = document.createElement("div");
+  messageItem.className = "chat-message";
+  messageItem.innerHTML = messageMarkup(payload);
+  messagesContainer.appendChild(messageItem);
+});
 
 // When you connect, you'll often need to authenticate the client.
 // For example, imagine you have an authentication plug, `MyAuth`,
@@ -51,14 +87,19 @@ let socket = new Socket("/socket", {params: {token: window.userToken}})
 //     end
 //
 // Finally, connect to the socket:
-socket.connect()
+socket.connect();
 
 // Now that you are connected, you can join channels with a topic.
 // Let's assume you have a channel with a topic named `room` and the
 // subtopic is its id - in this case 42:
-let channel = socket.channel("room:lobby", {})
-channel.join()
-  .receive("ok", resp => { console.log("Joined successfully", resp) })
-  .receive("error", resp => { console.log("Unable to join", resp) })
 
-export default socket
+channel
+  .join()
+  .receive("ok", (resp) => {
+    console.log("Joined successfully", resp);
+  })
+  .receive("error", (resp) => {
+    console.log("Unable to join", resp);
+  });
+
+export default socket;
