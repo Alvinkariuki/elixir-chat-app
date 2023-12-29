@@ -16,6 +16,7 @@ defmodule ChatApp.Application do
       {Phoenix.PubSub, name: ChatApp.PubSub},
       # Start Finch
       {Finch, name: ChatApp.Finch},
+      ChatAppWeb.Presence,
       # Start the Endpoint (http/https)
       ChatAppWeb.Endpoint
       # Start a worker by calling: ChatApp.Worker.start_link(arg)
